@@ -1,10 +1,10 @@
 # TLS Version Checker
 
-TLS Version Checker is a Go-based CLI tool that checks server support for various TLS/SSL versions and evaluates TLS certificate validity, including expiration checks. Simple, efficient, and requires no external dependencies.
+TLS Version Checker is a Go-based CLI tool that checks server support for various TLS versions and evaluates TLS certificate validity, including expiration checks. Simple, efficient, and requires no external dependencies.
 
 ## Features
 
-* Checks support for SSLv3, TLSv1.0, TLSv1.1, TLSv1.2, and TLSv1.3.
+* Checks support for TLSv1.0, TLSv1.1, TLSv1.2, and TLSv1.3.
 * Indicates whether a TLS version is considered deprecated.
 * Verifies the server's TLS certificate for expiration.
 * Provides detailed information on certificate validity.

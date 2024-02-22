@@ -19,6 +19,7 @@ type CheckResult struct {
 	Expired      bool
 	ExpiringSoon bool
 	ExpiryDate   time.Time
+	Error        error
 }
 
 func checkTLSVersion(server string, tlsVersion TLSVersion) CheckResult {
@@ -30,7 +31,7 @@ func checkTLSVersion(server string, tlsVersion TLSVersion) CheckResult {
 
 	conn, err := tls.Dial("tcp", server, config)
 	if err != nil {
-		return CheckResult{Supported: false}
+		return CheckResult{Supported: false, Error: err}
 	}
 	defer conn.Close()
 
@@ -54,7 +55,6 @@ func main() {
 	}
 
 	tlsVersions := []TLSVersion{
-		{"SSL v3", tls.VersionSSL30, true},
 		{"TLS v1.0", tls.VersionTLS10, true},
 		{"TLS v1.1", tls.VersionTLS11, true},
 		{"TLS v1.2", tls.VersionTLS12, false},
@@ -67,25 +67,28 @@ func main() {
 			server = arg + ":443"
 		}
 
-		fmt.Printf("Checking supported TLS/SSL versions for %s\n", server)
+		fmt.Printf("Checking supported TLS versions for %s\n", server)
 
 		for _, tlsVersion := range tlsVersions {
 			fmt.Printf("Testing %s...\t", tlsVersion.Name)
 			result := checkTLSVersion(server, tlsVersion)
 
 			resultColor := "\033[32m" // Green for supported
-			if tlsVersion.Deprecated {
+			if tlsVersion.Deprecated || result.Error != nil {
 				resultColor = "\033[31m" // Red for deprecated
 			}
 			if result.Supported {
 				fmt.Printf("%sSupported\033[0m", resultColor)
 			} else {
 				fmt.Print("Not supported")
+				if result.Error != nil {
+					fmt.Printf(" (%s)", result.Error)
+				}
 			}
 			if result.Expired {
-				fmt.Printf(" (Certificate expired on %s)", result.ExpiryDate.Format("2006-01-02"))
+				fmt.Printf(" [Certificate expired on %s]", result.ExpiryDate.Format("2006-01-02"))
 			} else if result.ExpiringSoon {
-				fmt.Printf(" (Certificate expiring soon on %s)", result.ExpiryDate.Format("2006-01-02"))
+				fmt.Printf(" [Certificate expiring soon on %s]", result.ExpiryDate.Format("2006-01-02"))
 			}
 			fmt.Println() // New line for readability
 		}
