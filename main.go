@@ -19,6 +19,7 @@ type CheckResult struct {
 	Expired      bool
 	ExpiringSoon bool
 	ExpiryDate   time.Time
+	CipherSuite  uint16
 	Error        error
 }
 
@@ -35,7 +36,8 @@ func checkTLSVersion(server string, tlsVersion TLSVersion) CheckResult {
 	}
 	defer conn.Close()
 
-	cert := conn.ConnectionState().PeerCertificates[0]
+	connState := conn.ConnectionState()
+	cert := connState.PeerCertificates[0]
 	now := time.Now()
 	expired := cert.NotAfter.Before(now)
 	expiringSoon := now.Add(30 * 24 * time.Hour).After(cert.NotAfter)
@@ -45,6 +47,7 @@ func checkTLSVersion(server string, tlsVersion TLSVersion) CheckResult {
 		Expired:      expired,
 		ExpiringSoon: expiringSoon,
 		ExpiryDate:   cert.NotAfter,
+		CipherSuite:  connState.CipherSuite,
 	}
 }
 
@@ -79,6 +82,7 @@ func main() {
 			}
 			if result.Supported {
 				fmt.Printf("%sSupported\033[0m", resultColor)
+				fmt.Printf(" [Used cipher: %s]", tls.CipherSuiteName(result.CipherSuite))
 			} else {
 				fmt.Print("Not supported")
 				if result.Error != nil {
